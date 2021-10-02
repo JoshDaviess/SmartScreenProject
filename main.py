@@ -6,12 +6,18 @@ import pprint
 import os
 import urllib.request
 import time
+import requests
+import json
 from datetime import datetime
 from colorthief import ColorThief
 from PIL import Image, ImageTk
 from spotipy.oauth2 import SpotifyOAuth
 from time import strftime
 import tkinter as tk
+BASE_URL = "https://api.openweathermap.org/data/2.5/weather?"
+CITY = '2639996'
+API_KEY = 'ad8ae6c5543cfeb83b3e084515554caf'
+URL = BASE_URL + "q=" + CITY + "&appid=" + API_KEY
 os.environ["SPOTIPY_CLIENT_ID"] = "8a3551ed1c614b1fa92aa297c1a6d226"
 os.environ["SPOTIPY_CLIENT_SECRET"] = "0e0563dcee50459192f7243139cb7205"
 os.environ["SPOTIPY_REDIRECT_URI"] = "http://localhost:8080"
@@ -23,6 +29,7 @@ root = tk.Tk()
 backgroundR = 0
 backgroundG = 0
 backgroundB = 0
+changed = 0
 fontColour = (255, 255, 255)
 songName = ''
 songArtist = ''
@@ -45,12 +52,32 @@ pygame.display.init()
 
 myfontArtist = pygame.font.SysFont('Roboto', 36, bold=True)
 myfontSong = pygame.font.SysFont('Roboto', 32)
-myfontWeekday = pygame.font.SysFont('Roboto', 52, bold=True)
-myfontTime = pygame.font.SysFont('Roboto', 42, bold=True)
+myfontWeekday = pygame.font.SysFont('Roboto', 42, bold=True)
+myfontTime = pygame.font.SysFont('Roboto', 62, bold=True)
 
 
-
-
+def getWeather():
+    global URL
+    response = requests.get(URL)
+    if response.status_code == 200:
+        # getting data in the json format
+        data = response.json()
+        # getting the main dict block
+        main = data['main']
+        # getting temperature
+        temperature = main['temp']
+        # getting the humidity
+        humidity = main['humidity']
+        # getting the pressure
+        pressure = main['pressure']
+        # weather report
+        report = data['weather']
+        print(f"{CITY:-^30}")
+        print(f"Temperature: {temperature}")
+        print(f"Humidity: {humidity}")
+        print(f"Pressure: {pressure}")
+        print(f"Weather Report: {report[0]['description']}")
+    print(URL)
 
 def getCurrentlyPlaying():
     global spotifyTimestamp
@@ -65,8 +92,10 @@ def getCurrentlyPlaying():
         print('No song playing')
     if playing != None:
         spotPlaying = True
+        print('found song')
         songArtist = playing['item']['artists'][0]['name']
         songName = playing['item']['name']
+        isNewSong = True
         if prevSong != songName:
             urllib.request.urlretrieve(playing['item']['album']['images'][0]['url'], 'spotify.jpeg')
             print('new song')
@@ -74,24 +103,29 @@ def getCurrentlyPlaying():
         spotifyTimestamp = time.gmtime()[4]
 
 def fadeInImg(img, x, y):
-    for i in range (50):
+    inc = 0
+    for i in range (30):
         pygame.event.get()
-        img.set_alpha(i * 3)
+        inc = (i // 11) + 1
+        img.set_alpha(i * inc)
         screen.blit(img, (x, y))
         pygame.display.update()
         pygame.time.wait(10)
     img.set_alpha(225)
+    draw()
 
 
-def minute_passed(oldepoch):
-    return time.time() - oldepoch >= 60
 
-def placeSpotifyImage(img, placex, placey, change):
+def placeSpotifyImage(change):
     global isNewSong
+    spotifyImg = pygame.image.load('spotify.jpeg').convert()
+    spotifyImg = pygame.transform.smoothscale(spotifyImg, (500, 500))
+    placex = (screen_width / 2) - (spotifyImg.get_width() / 2)
+    placey = (screen_height / 2) - (spotifyImg.get_width() / 2)
     if isNewSong and change:
-        fadeInImg(img, placex, placey)
+        fadeInImg(spotifyImg, placex, placey)
     else:
-        screen.blit(img, (placex, placey))
+        screen.blit(spotifyImg, (placex, placey))
 
 def spotifyDeets(update):
     global isNewSong
@@ -103,17 +137,9 @@ def spotifyDeets(update):
     if update:
         getCurrentlyPlaying()
         if spotPlaying:
-            spotifyImg = pygame.image.load('spotify.jpeg').convert()
-            spotifyImg = pygame.transform.smoothscale(spotifyImg, (400, 400))
-            placex = (screen_width / 2) - (spotifyImg.get_width() / 2)
-            placey = (screen_height / 2) - (spotifyImg.get_width() / 2)
-            placeSpotifyImage(spotifyImg, placex, placey, True)
-            screen.fill((backgroundR, backgroundG, backgroundB))
-            clock()
-            spotifyText()
-            placeSpotifyImage(spotifyImg, placex, placey, False)
-            pygame.display.update()
-    pygame.event.get()
+            placeSpotifyImage(True)
+            draw()
+
 def weekday():
     date = datetime.today().weekday()
     if date == 0:
@@ -138,20 +164,22 @@ def clock():
     now = datetime.now()
     block = pygame.draw.rect(screen, (backgroundR, backgroundG, backgroundB), pygame.Rect(0, 0, 300, 150))
     current_time = now.strftime("%I:%M %p")
-    print(current_time)
+    current_date = now.strftime("%d %B")
     date = weekday()
     textSurfaceWeekDay = myfontWeekday.render(date, True, fontColour)
+    textSurfaceDate = myfontWeekday.render(current_date, True, fontColour)
     textSurfaceTime = myfontTime.render(current_time, True, fontColour)
-    screen.blit(textSurfaceWeekDay, (10, 10))
-    screen.blit(textSurfaceTime, (10, 60))
+    screen.blit(textSurfaceTime, (10, 10))
+    screen.blit(textSurfaceWeekDay, (12, 68))
+    screen.blit(textSurfaceDate, (12, 114))
 
 def spotifyText():
     global songName
     global songArtist
     textsurfaceArtist = myfontArtist.render(songArtist, True, fontColour)
     textsurfaceSong = myfontSong.render(songName, True, fontColour)
-    screen.blit(textsurfaceArtist,(((screen_width / 2) - 200 ),((screen_height / 2 )+ 200)))
-    screen.blit(textsurfaceSong,(((screen_width / 2) - 200 ),((screen_height / 2 )+ 236)))
+    screen.blit(textsurfaceArtist,(((screen_width / 2) - 250 ),((screen_height / 2 ) + 250)))
+    screen.blit(textsurfaceSong,(((screen_width / 2) - 250 ),((screen_height / 2 ) + 286)))
 
 def changeBackground():
     global backgroundR
@@ -161,23 +189,9 @@ def changeBackground():
     global songArtist
     global myFont
     global fontColour
-
-    color_thief = ColorThief('spotify.jpeg')
-    dominant_color = color_thief.get_color(quality=1)
-    spotifyImg = pygame.image.load('spotify.jpeg').convert()
-    spotifyImg = pygame.transform.smoothscale(spotifyImg, (400, 400))
-    placex = (screen_width / 2) - (spotifyImg.get_width() / 2)
-    placey = (screen_height / 2) - (spotifyImg.get_width() / 2)
-
-    #screen.fill((backgroundR, backgroundG, backgroundB))
-    # placeSpotifyImage(spotifyImg, placex, placey, False)
-    # textsurfaceArtist = myfontArtist.render(songArtist, True, fontColour)
-    # textsurfaceSong = myfontSong.render(songName, True, fontColour)
-    # screen.blit(textsurfaceArtist,(((screen_width / 2) - 200 ),((screen_height / 2 )+ 200)))
-    # screen.blit(textsurfaceSong,(((screen_width / 2) - 200 ),((screen_height / 2 )+ 236)))
-    # clock()
-    #pygame.display.update()
-
+    if(backgroundR + backgroundG + backgroundB) = (dominant_color[0] + dominant_color[1] + dominant_color[2]):
+        print('Background is the same')
+        return
     stepsR = backgroundR - dominant_color[0]
     stepsG = backgroundG - dominant_color[1]
     stepsB = backgroundB - dominant_color[2]
@@ -219,40 +233,49 @@ def changeBackground():
             elif not bUp:
                 currentB = currentB - 2
                 stepsB = stepsB - 2
-        screen.fill((currentR, currentG, currentB))
         backgroundR = currentR
         backgroundG = currentG
         backgroundB = currentB
-        if(backgroundR + backgroundG + backgroundB) > 600:
+        if(backgroundR + backgroundG + backgroundB) > 550:
             fontColour = (0, 0, 0)
-        if(backgroundR + backgroundG + backgroundB) < 600:
+        if(backgroundR + backgroundG + backgroundB) < 550:
             fontColour = (255, 255, 255)
-        placeSpotifyImage(spotifyImg, placex, placey, False)
-        textsurfaceArtist = myfontArtist.render(songArtist, True, fontColour)
-        textsurfaceSong = myfontSong.render(songName, True, fontColour)
-        screen.blit(textsurfaceArtist,(((screen_width / 2) - 200 ),((screen_height / 2 )+ 200)))
-        screen.blit(textsurfaceSong,(((screen_width / 2) - 200 ),((screen_height / 2 )+ 236)))
-        clock()
-        pygame.display.update()
+        draw()
+
+
+def draw():
+    global backgroundR
+    global backgroundG
+    global backgroundB
+    global spotPlaying
+    screen.fill((backgroundR, backgroundG, backgroundB))
+    clock()
+    if spotPlaying:
+        placeSpotifyImage(False)
+        spotifyText()
+    pygame.display.update()
+    pygame.event.get()
+
 
 while True:
     if sync > 5:
         spotifyDeets(True)
+        getWeather()
         sync = 0
-
     if isNewSong and spotPlaying:
         print('changing background')
+        color_thief = ColorThief('spotify.jpeg')
+        dominant_color = color_thief.get_color(quality=1)
         changeBackground()
+        changed = 0
         isNewSong = False
-        clock()
     if not spotPlaying:
-        screen.fill((0, 0, 0))
-        clock()
-        pygame.display.update()
+        if changed != 1:
+            dominant_color = (0, 0, 0)
+            changeBackground()
+            changed = 1
+    draw()
     pygame.time.wait(1000)
-    print(sync)
     sync = sync + 1
-    clock()
-    pygame.display.update()
     pygame.event.get()
 
