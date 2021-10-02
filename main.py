@@ -6,6 +6,7 @@ import pprint
 import os
 import urllib.request
 import time
+from datetime import datetime
 from colorthief import ColorThief
 from PIL import Image, ImageTk
 from spotipy.oauth2 import SpotifyOAuth
@@ -28,6 +29,8 @@ isNewSong = True
 spotifyTimestamp = time.gmtime()[4]
 print(spotifyTimestamp)
 dominant_color = (0, 0, 0)
+spotPlaying = False
+sync = 6
 
 screen_width = root.winfo_screenwidth()
 screen_height = root.winfo_screenheight()
@@ -41,6 +44,8 @@ pygame.display.init()
 
 myfontArtist = pygame.font.SysFont('Roboto', 36, bold=True)
 myfontSong = pygame.font.SysFont('Roboto', 32)
+myfontWeekday = pygame.font.SysFont('Roboto', 52, bold=True)
+myfontTime = pygame.font.SysFont('Roboto', 42, bold=True)
 
 
 
@@ -51,16 +56,20 @@ def getCurrentlyPlaying():
     global songName
     global songArtist
     global isNewSong
+    global spotPlaying
     prevSong = songName
     playing = sp.current_user_playing_track()
+    if playing == None:
+        spotPlaying = False
+        print('No song playing')
     if playing != None:
+        spotPlaying = True
         songArtist = playing['item']['artists'][0]['name']
         songName = playing['item']['name']
         if prevSong != songName:
             urllib.request.urlretrieve(playing['item']['album']['images'][0]['url'], 'spotify.jpeg')
             print('new song')
             isNewSong = True
-
         spotifyTimestamp = time.gmtime()[4]
 
 def fadeInImg(img, x, y):
@@ -87,14 +96,40 @@ def placeSpotifyImage(img, placex, placey, change):
 def spotifyDeets(update):
     global isNewSong
     global dominant_color
+    global spotPlaying
     if update:
         getCurrentlyPlaying()
-        spotifyImg = pygame.image.load('spotify.jpeg').convert()
-        spotifyImg = pygame.transform.smoothscale(spotifyImg, (400, 400))
-        placex = (screen_width / 2) - (spotifyImg.get_width() / 2)
-        placey = (screen_height / 2) - (spotifyImg.get_width() / 2)
-        placeSpotifyImage(spotifyImg, placex, placey, True)
+        if spotPlaying:
+            spotifyImg = pygame.image.load('spotify.jpeg').convert()
+            spotifyImg = pygame.transform.smoothscale(spotifyImg, (400, 400))
+            placex = (screen_width / 2) - (spotifyImg.get_width() / 2)
+            placey = (screen_height / 2) - (spotifyImg.get_width() / 2)
+            placeSpotifyImage(spotifyImg, placex, placey, True)
     pygame.event.get()
+def weekday():
+    date = datetime.today().weekday()
+    if date == 0:
+        return 'Monday'
+    if date == 1:
+        return 'Tuesday'
+    if date == 2:
+        return 'Wednesday'
+    if date == 3:
+        return 'Thursday'
+    if date == 4:
+        return 'Friday'
+    if date == 5:
+        return 'Saturday'
+    if date == 6:
+        return 'Sunday'
+
+def clock():
+    now = datetime.now()
+    current_time = now.strftime("%I:%M %p")
+    print("Current Time =", current_time)
+    date = weekday()
+    textSurfaceWeekDay = myfontWeekday.render(date, True, (255, 255, 255))
+    screen.blit(textSurfaceWeekDay, (10, 10))
 
 
 def changeBackground():
@@ -166,13 +201,25 @@ def changeBackground():
         screen.blit(textsurfaceArtist,(((screen_width / 2) - 200 ),((screen_height / 2 )+ 200)))
         screen.blit(textsurfaceSong,(((screen_width / 2) - 200 ),((screen_height / 2 )+ 236)))
         pygame.display.update()
-        # screen.fill((i + 1, backgroundG, backgroundB))
-        # pygame.display.flip()
-        # backgroundR = i
+
 while True:
-    spotifyDeets(True)
-    if isNewSong:
+    if sync > 5:
+        spotifyDeets(True)
+        sync = 0
+
+    if isNewSong and spotPlaying:
+        print('changing background')
         changeBackground()
         isNewSong = False
-    pygame.time.wait(1500)
+    if not spotPlaying:
+        screen.fill((0, 0, 0))
+        pygame.display.update()
+    pygame.time.wait(1000)
+    print(sync)
+    sync = sync + 1
+    pygame.draw.rect(screen, (backgroundR, backgroundG, backgroundB), pygame.Rect(100, 100, 100, 100))
+    pygame.display.update()
+    clock()
+    pygame.display.update()
     pygame.event.get()
+
