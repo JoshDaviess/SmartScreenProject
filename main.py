@@ -8,6 +8,7 @@ import urllib.request
 import time
 import requests
 import json
+import threading
 from datetime import datetime
 from colorthief import ColorThief
 from PIL import Image, ImageTk
@@ -15,7 +16,7 @@ from spotipy.oauth2 import SpotifyOAuth
 from time import strftime
 import tkinter as tk
 BASE_URL = "https://api.openweathermap.org/data/2.5/weather?"
-CITY = '2639996'
+CITY = 'portsmouth,gb'
 API_KEY = 'ad8ae6c5543cfeb83b3e084515554caf'
 URL = BASE_URL + "q=" + CITY + "&appid=" + API_KEY
 os.environ["SPOTIPY_CLIENT_ID"] = "8a3551ed1c614b1fa92aa297c1a6d226"
@@ -38,7 +39,9 @@ spotifyTimestamp = time.gmtime()[4]
 print(spotifyTimestamp)
 dominant_color = (0, 0, 0)
 spotPlaying = False
-sync = 6
+sync = 4
+temperature = 0
+currWeather = ''
 
 screen_width = root.winfo_screenwidth()
 screen_height = root.winfo_screenheight()
@@ -58,6 +61,8 @@ myfontTime = pygame.font.SysFont('Roboto', 62, bold=True)
 
 def getWeather():
     global URL
+    global temperature
+    global currWeather
     response = requests.get(URL)
     if response.status_code == 200:
         # getting data in the json format
@@ -65,19 +70,30 @@ def getWeather():
         # getting the main dict block
         main = data['main']
         # getting temperature
-        temperature = main['temp']
+        temperature = main['temp'] - 273.15
         # getting the humidity
         humidity = main['humidity']
         # getting the pressure
         pressure = main['pressure']
         # weather report
-        report = data['weather']
-        print(f"{CITY:-^30}")
-        print(f"Temperature: {temperature}")
+        report = data['weather'][0]['main']
+        currWeather = report
+        print(int(temperature))
         print(f"Humidity: {humidity}")
         print(f"Pressure: {pressure}")
-        print(f"Weather Report: {report[0]['description']}")
     print(URL)
+
+def drawWeather():
+    global temperature
+    global currWeather
+    if int(temperature) < 10:
+        textLen = 100
+    tempText = str(int(temperature)) + '°'
+    textsurfaceTemp = myfontTime.render(tempText, True, fontColour)
+    textsurfaceCurr = myfontTime.render(currWeather, True, fontColour)
+    screen.blit(textsurfaceTemp,(((screen_width - 110 ), 10)))
+    screen.blit(textsurfaceCurr,(((screen_width - 160 ), 72)))
+
 
 def getCurrentlyPlaying():
     global spotifyTimestamp
@@ -189,7 +205,7 @@ def changeBackground():
     global songArtist
     global myFont
     global fontColour
-    if(backgroundR + backgroundG + backgroundB) = (dominant_color[0] + dominant_color[1] + dominant_color[2]):
+    if abs((backgroundR + backgroundG + backgroundB) - (dominant_color[0] + dominant_color[1] + dominant_color[2])) < 35:
         print('Background is the same')
         return
     stepsR = backgroundR - dominant_color[0]
@@ -201,6 +217,7 @@ def changeBackground():
     rUp = False
     gUp = False
     bUp = False
+    print('looping')
     if stepsR < 0: #Negative number
         stepsR = abs(stepsR)
         rUp = True
@@ -253,15 +270,17 @@ def draw():
     if spotPlaying:
         placeSpotifyImage(False)
         spotifyText()
+    drawWeather()
     pygame.display.update()
     pygame.event.get()
 
 
+
+
+threading.Thread(getWeather())
 while True:
-    if sync > 5:
+    if (sync % 4) == 0:
         spotifyDeets(True)
-        getWeather()
-        sync = 0
     if isNewSong and spotPlaying:
         print('changing background')
         color_thief = ColorThief('spotify.jpeg')
@@ -274,7 +293,12 @@ while True:
             dominant_color = (0, 0, 0)
             changeBackground()
             changed = 1
+    if sync == 60:
+        threading.Thread(getWeather())
+    if sync > 60:
+        sync = 0
     draw()
+    print(sync)
     pygame.time.wait(1000)
     sync = sync + 1
     pygame.event.get()
