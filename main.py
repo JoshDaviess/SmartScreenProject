@@ -53,10 +53,10 @@ screen = pygame.display.set_mode((screen_width, screen_height), pygame.NOFRAME)
 pygame.display.init()
 # background = pygame.draw.rect(screen, (100,100,100), pygame.Rect(0, 0, screen_width, screen_height))
 
-myfontArtist = pygame.font.SysFont('Roboto', 36, bold=True)
-myfontSong = pygame.font.SysFont('Roboto', 32)
-myfontWeekday = pygame.font.SysFont('Roboto', 42, bold=True)
-myfontTime = pygame.font.SysFont('Roboto', 62, bold=True)
+myfontArtist = pygame.font.SysFont('Roboto', 44, bold=True)
+myfontSong = pygame.font.SysFont('Roboto', 28)
+myfontWeekday = pygame.font.SysFont('Roboto', 58, bold=False)
+myfontTime = pygame.font.SysFont('Roboto', 86, bold=True)
 
 
 def getWeather():
@@ -76,7 +76,7 @@ def getWeather():
         # getting the pressure
         pressure = main['pressure']
         # weather report
-        report = data['weather'][0]['main']
+        report = data['weather'][0]['description']
         currWeather = report
         print(int(temperature))
         print(f"Humidity: {humidity}")
@@ -90,9 +90,9 @@ def drawWeather():
         textLen = 100
     tempText = str(int(temperature)) + '°'
     textsurfaceTemp = myfontTime.render(tempText, True, fontColour)
-    textsurfaceCurr = myfontTime.render(currWeather, True, fontColour)
-    screen.blit(textsurfaceTemp,(((screen_width - 110 ), 10)))
-    screen.blit(textsurfaceCurr,(((screen_width - 160 ), 72)))
+    textsurfaceCurr = myfontWeekday.render(currWeather, True, fontColour)
+    screen.blit(textsurfaceTemp,(((screen_width - (textsurfaceTemp.get_width() + 10) ), 10)))
+    screen.blit(textsurfaceCurr,(((screen_width - (textsurfaceCurr.get_width() + 10) ), (textsurfaceTemp.get_height() - 10))))
 
 
 def getCurrentlyPlaying():
@@ -186,8 +186,8 @@ def clock():
     textSurfaceDate = myfontWeekday.render(current_date, True, fontColour)
     textSurfaceTime = myfontTime.render(current_time, True, fontColour)
     screen.blit(textSurfaceTime, (10, 10))
-    screen.blit(textSurfaceWeekDay, (12, 68))
-    screen.blit(textSurfaceDate, (12, 114))
+    screen.blit(textSurfaceWeekDay, (12, 88))
+    screen.blit(textSurfaceDate, (12, 148))
 
 def spotifyText():
     global songName
@@ -195,7 +195,7 @@ def spotifyText():
     textsurfaceArtist = myfontArtist.render(songArtist, True, fontColour)
     textsurfaceSong = myfontSong.render(songName, True, fontColour)
     screen.blit(textsurfaceArtist,(((screen_width / 2) - 250 ),((screen_height / 2 ) + 250)))
-    screen.blit(textsurfaceSong,(((screen_width / 2) - 250 ),((screen_height / 2 ) + 286)))
+    screen.blit(textsurfaceSong,(((screen_width / 2) - 250 ),((screen_height / 2 ) + 294)))
 
 def changeBackground():
     global backgroundR
