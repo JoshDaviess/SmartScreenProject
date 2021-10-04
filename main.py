@@ -195,7 +195,7 @@ def spotifyText():
     textsurfaceArtist = myfontArtist.render(songArtist, True, fontColour)
     textsurfaceSong = myfontSong.render(songName, True, fontColour)
     screen.blit(textsurfaceArtist,(((screen_width / 2) - 250 ),((screen_height / 2 ) + 250)))
-    screen.blit(textsurfaceSong,(((screen_width / 2) - 250 ),((screen_height / 2 ) + 294)))
+    screen.blit(textsurfaceSong,(((screen_width / 2) - 250 ),((screen_height / 2 ) + 300)))
 
 def changeBackground():
     global backgroundR
@@ -205,7 +205,7 @@ def changeBackground():
     global songArtist
     global myFont
     global fontColour
-    if abs((backgroundR + backgroundG + backgroundB) - (dominant_color[0] + dominant_color[1] + dominant_color[2])) < 35:
+    if abs((backgroundR + backgroundG + backgroundB) - (dominant_color[0] + dominant_color[1] + dominant_color[2])) < 15:
         print('Background is the same')
         return
     stepsR = backgroundR - dominant_color[0]
@@ -227,23 +227,23 @@ def changeBackground():
     if stepsB < 0: #Negative number
         stepsB = abs(stepsB)
         bUp = True
-    for i in range(0, 150):
+    for i in range(0, 160):
         pygame.event.get()
-        if stepsR > 10:
+        if stepsR > 5:
             if rUp:
                 currentR = currentR + 2
                 stepsR = stepsR - 2
             elif not rUp:
                 currentR = currentR - 2
                 stepsR = stepsR - 2
-        if stepsG > 10:
+        if stepsG > 5:
             if gUp:
                 currentG = currentG + 2
                 stepsG = stepsG - 2
             elif not gUp:
                 currentG = currentG - 2
                 stepsG = stepsG - 2
-        if stepsB > 10:
+        if stepsB > 5:
             if bUp:
                 currentB = currentB + 2
                 stepsB = stepsB - 2
@@ -293,9 +293,30 @@ while True:
             dominant_color = (0, 0, 0)
             changeBackground()
             changed = 1
-    if sync == 60:
+    if sync == 120:
         threading.Thread(getWeather())
-    if sync > 60:
+    if (sync == 200) and not spotPlaying:
+        dominant_color = (200, 0, 0)
+        changeBackground()
+    if (sync == 230) and not spotPlaying:
+        dominant_color = (200, 200, 0)
+        changeBackground()
+    if (sync == 260) and not spotPlaying:
+        dominant_color = (0, 200, 0)
+        changeBackground()
+    if (sync == 290) and not spotPlaying:
+        dominant_color = (0, 200, 200)
+        changeBackground()
+    if (sync == 320) and not spotPlaying:
+        dominant_color = (0, 0, 200)
+        changeBackground()
+    if (sync == 350) and not spotPlaying:
+        dominant_color = (200, 0, 200)
+        changeBackground()
+    if (sync == 380) and not spotPlaying:
+        dominant_color = (0, 0, 0)
+        changeBackground()
+    if sync > 390:
         sync = 0
     draw()
     print(sync)
