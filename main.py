@@ -18,7 +18,9 @@ import tkinter as tk
 BASE_URL = "https://api.openweathermap.org/data/2.5/weather?"
 CITY = 'portsmouth,gb'
 API_KEY = 'ad8ae6c5543cfeb83b3e084515554caf'
-URL = BASE_URL + "q=" + CITY + "&appid=" + API_KEY
+URL = BASE_URL + "q=" + CITY + "&units=metric&appid=" + API_KEY
+BASE_URL_FORECAST = "https://api.openweathermap.org/data/2.5/forecast?"
+FORECAST_URL = BASE_URL_FORECAST + "q=" + CITY + "&units=metric&appid=" + API_KEY
 os.environ["SPOTIPY_CLIENT_ID"] = "8a3551ed1c614b1fa92aa297c1a6d226"
 os.environ["SPOTIPY_CLIENT_SECRET"] = "0e0563dcee50459192f7243139cb7205"
 os.environ["SPOTIPY_REDIRECT_URI"] = "http://localhost:8080"
@@ -42,7 +44,7 @@ spotPlaying = False
 sync = 4
 temperature = 0
 currWeather = ''
-
+forecast = []
 screen_width = root.winfo_screenwidth()
 screen_height = root.winfo_screenheight()
 
@@ -53,10 +55,11 @@ screen = pygame.display.set_mode((screen_width, screen_height), pygame.NOFRAME)
 pygame.display.init()
 # background = pygame.draw.rect(screen, (100,100,100), pygame.Rect(0, 0, screen_width, screen_height))
 
-myfontArtist = pygame.font.SysFont('Roboto', 44, bold=True)
-myfontSong = pygame.font.SysFont('Roboto', 28)
-myfontWeekday = pygame.font.SysFont('Roboto', 58, bold=False)
-myfontTime = pygame.font.SysFont('Roboto', 86, bold=True)
+myfontArtist = pygame.font.SysFont('Roboto', 52, bold=True)
+myfontSong = pygame.font.SysFont('Roboto', 32)
+myfontWeekday = pygame.font.SysFont('Roboto', 62, bold=False)
+myfontTime = pygame.font.SysFont('Roboto', 94, bold=True)
+myfontForecast = pygame.font.SysFont('Roboto', 44, bold=False)
 
 
 def getWeather():
@@ -70,18 +73,51 @@ def getWeather():
         # getting the main dict block
         main = data['main']
         # getting temperature
-        temperature = main['temp'] - 273.15
-        # getting the humidity
-        humidity = main['humidity']
-        # getting the pressure
-        pressure = main['pressure']
+        temperature = main['feels_like']
         # weather report
         report = data['weather'][0]['description']
-        currWeather = report
-        print(int(temperature))
-        print(f"Humidity: {humidity}")
-        print(f"Pressure: {pressure}")
-    print(URL)
+        currWeather = report.title()
+
+
+def forecastDay(dateIn):
+    datetime_object = datetime.strptime(dateIn, '%Y-%m-%d')
+    date = datetime_object.weekday()
+    if date == 0:
+        return 'Mon'
+    if date == 1:
+        return 'Tue'
+    if date == 2:
+        return 'Wed'
+    if date == 3:
+        return 'Thu'
+    if date == 4:
+        return 'Fri'
+    if date == 5:
+        return 'Sat'
+    if date == 6:
+        return 'Sun'
+
+def getForecast():
+    global FORECAST_URL
+    global temperature
+    global currWeather
+    global forecast
+    forecast = []
+    response = requests.get(FORECAST_URL)
+    if response.status_code == 200:
+        # getting data in the json format
+        data = response.json()
+        for i in range(1, len(data['list'])):
+            time = data['list'][i]['dt_txt']
+            if(time[-8:] == '15:00:00'):
+                strDate = (data['list'][i]['dt_txt'])[:10]
+                strDate = forecastDay(strDate)
+                strWeat = data['list'][i]['weather'][0]['main']
+                strTemp = (str(int(data['list'][i]['main']['feels_like'])) + '°' )
+                strText = (strDate + ' | ' + strTemp + ' | ' + strWeat)
+                forecast.append(strText)
+        print(forecast)
+
 
 def drawWeather():
     global temperature
@@ -92,7 +128,11 @@ def drawWeather():
     textsurfaceTemp = myfontTime.render(tempText, True, fontColour)
     textsurfaceCurr = myfontWeekday.render(currWeather, True, fontColour)
     screen.blit(textsurfaceTemp,(((screen_width - (textsurfaceTemp.get_width() + 10) ), 10)))
-    screen.blit(textsurfaceCurr,(((screen_width - (textsurfaceCurr.get_width() + 10) ), (textsurfaceTemp.get_height() - 10))))
+    screen.blit(textsurfaceCurr,(((screen_width - (textsurfaceCurr.get_width() + 10) ), (textsurfaceTemp.get_height() - 14))))
+
+    for i in range(len(forecast)):
+        textSurfaceForecast = myfontForecast.render(forecast[i], True, fontColour)
+        screen.blit(textSurfaceForecast,(((screen_width - (textSurfaceForecast.get_width() + 10) ), (textsurfaceTemp.get_height() + textsurfaceCurr.get_height() - 20 + (i * 48)))))
 
 
 def getCurrentlyPlaying():
@@ -116,7 +156,6 @@ def getCurrentlyPlaying():
             urllib.request.urlretrieve(playing['item']['album']['images'][0]['url'], 'spotify.jpeg')
             print('new song')
             isNewSong = True
-        spotifyTimestamp = time.gmtime()[4]
 
 def fadeInImg(img, x, y):
     inc = 0
@@ -135,7 +174,7 @@ def fadeInImg(img, x, y):
 def placeSpotifyImage(change):
     global isNewSong
     spotifyImg = pygame.image.load('spotify.jpeg').convert()
-    spotifyImg = pygame.transform.smoothscale(spotifyImg, (500, 500))
+    spotifyImg = pygame.transform.smoothscale(spotifyImg, (600, 600))
     placex = (screen_width / 2) - (spotifyImg.get_width() / 2)
     placey = (screen_height / 2) - (spotifyImg.get_width() / 2)
     if isNewSong and change:
@@ -186,16 +225,16 @@ def clock():
     textSurfaceDate = myfontWeekday.render(current_date, True, fontColour)
     textSurfaceTime = myfontTime.render(current_time, True, fontColour)
     screen.blit(textSurfaceTime, (10, 10))
-    screen.blit(textSurfaceWeekDay, (12, 88))
-    screen.blit(textSurfaceDate, (12, 148))
+    screen.blit(textSurfaceWeekDay, (12, (textSurfaceTime.get_height() - 14)))
+    screen.blit(textSurfaceDate, (12, (textSurfaceTime.get_height() + textSurfaceDate.get_height() - 20)))
 
 def spotifyText():
     global songName
     global songArtist
     textsurfaceArtist = myfontArtist.render(songArtist, True, fontColour)
     textsurfaceSong = myfontSong.render(songName, True, fontColour)
-    screen.blit(textsurfaceArtist,(((screen_width / 2) - 250 ),((screen_height / 2 ) + 250)))
-    screen.blit(textsurfaceSong,(((screen_width / 2) - 250 ),((screen_height / 2 ) + 300)))
+    screen.blit(textsurfaceArtist,(((screen_width / 2) - 300 ),((screen_height / 2 ) + 300)))
+    screen.blit(textsurfaceSong,(((screen_width / 2) - 300 ),((screen_height / 2 ) + 360)))
 
 def changeBackground():
     global backgroundR
@@ -253,9 +292,9 @@ def changeBackground():
         backgroundR = currentR
         backgroundG = currentG
         backgroundB = currentB
-        if(backgroundR + backgroundG + backgroundB) > 550:
+        if(backgroundR + backgroundG + backgroundB) > 540:
             fontColour = (0, 0, 0)
-        if(backgroundR + backgroundG + backgroundB) < 550:
+        if(backgroundR + backgroundG + backgroundB) < 540:
             fontColour = (255, 255, 255)
         draw()
 
@@ -278,9 +317,11 @@ def draw():
 
 
 threading.Thread(getWeather())
+threading.Thread(getForecast())
 while True:
     if (sync % 4) == 0:
         spotifyDeets(True)
+        print(forecast)
     if isNewSong and spotPlaying:
         print('changing background')
         color_thief = ColorThief('spotify.jpeg')
@@ -293,8 +334,9 @@ while True:
             dominant_color = (0, 0, 0)
             changeBackground()
             changed = 1
-    if sync == 120:
+    if sync == 240:
         threading.Thread(getWeather())
+        threading.Thread(getForecast())
     if (sync == 200) and not spotPlaying:
         dominant_color = (200, 0, 0)
         changeBackground()
