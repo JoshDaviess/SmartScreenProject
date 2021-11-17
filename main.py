@@ -9,6 +9,7 @@ import time
 import requests
 import json
 import threading
+import googlemaps
 from datetime import datetime
 from colorthief import ColorThief
 from PIL import Image, ImageTk
@@ -23,11 +24,14 @@ URL = ''
 BASE_URL = "https://api.openweathermap.org/data/2.5/weather?"
 BASE_URL_FORECAST = "https://api.openweathermap.org/data/2.5/forecast?"
 FORECAST_URL = ''
+isTravel = False
+home_coord = '50.81447735115325, -1.0844253635578485'
+work_coord = '50.8760800950388, -1.2417771713491559'
 os.environ["SPOTIPY_CLIENT_ID"] = "8a3551ed1c614b1fa92aa297c1a6d226"
 os.environ["SPOTIPY_CLIENT_SECRET"] = "0e0563dcee50459192f7243139cb7205"
 os.environ["SPOTIPY_REDIRECT_URI"] = "http://localhost:8080"
 scope = 'user-read-private user-read-playback-state user-library-modify user-read-playback-position app-remote-control user-read-currently-playing user-library-read'
-sp = spotipy.Spotify(auth_manager=SpotifyOAuth(scope=scope))
+sp = spotipy.Spotify(auth_manager=SpotifyOAuth(scope=scope), requests_timeout=10, retries=10)
 pygame.init()
 root = tk.Tk()
 
@@ -43,7 +47,8 @@ spotifyTimestamp = time.gmtime()[4]
 print(spotifyTimestamp)
 dominant_color = (0, 0, 0)
 spotPlaying = False
-sync = 4
+journeyLength = ''
+sync = 5
 temperature = 0
 currWeather = ''
 forecast = []
@@ -76,7 +81,6 @@ def getAPIKEYS():
         if 'Weather=' in line.strip():
             print('Weather')
             WEATHER_API_KEY = line.strip().replace('Weather=', '')
-            print(WEATHER_API_KEY)
         if 'Google=' in line.strip():
             print('Google')
             GOOGLE_API_KEY = line.strip().replace('Google=', '')
@@ -99,6 +103,17 @@ def getWeather():
         # weather report
         report = data['weather'][0]['description']
         currWeather = report.title()
+
+def refreshJourney():
+    global GOOGLE_API_KEY
+    global journeyLength
+    gmaps = googlemaps.Client(key=GOOGLE_API_KEY)
+    now = datetime.now()
+    directions_result = gmaps.directions(home_coord, work_coord, mode="driving", departure_time=now, avoid='tolls')
+    legs = directions_result[0].get("legs")
+    for leg in legs:
+        journeyLength = leg.get('duration_in_traffic').get('text')
+
 
 
 def forecastDay(dateIn):
@@ -320,18 +335,28 @@ def changeBackground():
             fontColour = (255, 255, 255)
         draw()
 
+def drawTravel():
+    global journeyLength
+    global screen_width
+    global screen_height
+    journeyText = journeyLength + ' to work'
+    textsurfaceJourney = myfontWeekday.render(journeyText, True, fontColour)
+    screen.blit(textsurfaceJourney,((screen_width / 2 - (textsurfaceJourney.get_rect().width / 2)),(screen_height - 80)))
 
 def draw():
     global backgroundR
     global backgroundG
     global backgroundB
     global spotPlaying
+    global isTravel
     screen.fill((backgroundR, backgroundG, backgroundB))
     clock()
     if spotPlaying:
         placeSpotifyImage(False)
         spotifyText()
     drawWeather()
+    if isTravel:
+        drawTravel()
     pygame.display.update()
     pygame.event.get()
 
@@ -343,10 +368,11 @@ FORECAST_URL = BASE_URL_FORECAST + "q=" + CITY + "&units=metric&appid=" + WEATHE
 URL = BASE_URL + "q=" + CITY + "&units=metric&appid=" + WEATHER_API_KEY
 threading.Thread(getWeather())
 threading.Thread(getForecast())
+threading.Thread(refreshJourney())
 while True:
-    if (sync % 4) == 0:
+    isTravel = True
+    if (sync % 5) == 0:
         spotifyDeets(True)
-        print(forecast)
     if isNewSong and spotPlaying:
         print('changing background')
         color_thief = ColorThief('spotify.jpeg')
@@ -359,6 +385,8 @@ while True:
             dominant_color = (0, 0, 0)
             changeBackground()
             changed = 1
+    if (sync % 20) == 0:
+        refreshJourney()
     if sync == 240:
         threading.Thread(getWeather())
         threading.Thread(getForecast())
