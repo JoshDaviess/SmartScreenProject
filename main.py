@@ -17,10 +17,12 @@ from time import strftime
 import tkinter as tk
 BASE_URL = "https://api.openweathermap.org/data/2.5/weather?"
 CITY = 'portsmouth,gb'
-API_KEY = 'ad8ae6c5543cfeb83b3e084515554caf'
-URL = BASE_URL + "q=" + CITY + "&units=metric&appid=" + API_KEY
+WEATHER_API_KEY = ''
+GOOGLE_API_KEY = ''
+URL = ''
+BASE_URL = "https://api.openweathermap.org/data/2.5/weather?"
 BASE_URL_FORECAST = "https://api.openweathermap.org/data/2.5/forecast?"
-FORECAST_URL = BASE_URL_FORECAST + "q=" + CITY + "&units=metric&appid=" + API_KEY
+FORECAST_URL = ''
 os.environ["SPOTIPY_CLIENT_ID"] = "8a3551ed1c614b1fa92aa297c1a6d226"
 os.environ["SPOTIPY_CLIENT_SECRET"] = "0e0563dcee50459192f7243139cb7205"
 os.environ["SPOTIPY_REDIRECT_URI"] = "http://localhost:8080"
@@ -60,6 +62,26 @@ myfontSong = pygame.font.SysFont('Roboto', 32)
 myfontWeekday = pygame.font.SysFont('Roboto', 62, bold=False)
 myfontTime = pygame.font.SysFont('Roboto', 94, bold=True)
 myfontForecast = pygame.font.SysFont('Roboto', 44, bold=False)
+def getAPIKEYS():
+    global WEATHER_API_KEY
+    global GOOGLE_API_KEY
+    global BASE_URL
+    global BASE_URL_FORECAST
+    global FORECAST_URL
+    global URL
+    apiFile = open('keys.txt', 'r')
+    apiLines = apiFile.readlines()
+    count = 0
+    for line in apiLines:
+        if 'Weather=' in line.strip():
+            print('Weather')
+            WEATHER_API_KEY = line.strip().replace('Weather=', '')
+            print(WEATHER_API_KEY)
+        if 'Google=' in line.strip():
+            print('Google')
+            GOOGLE_API_KEY = line.strip().replace('Google=', '')
+        count += 1
+    return
 
 
 def getWeather():
@@ -127,7 +149,7 @@ def drawWeather():
     tempText = str(int(temperature)) + '°'
     textsurfaceTemp = myfontTime.render(tempText, True, fontColour)
     textsurfaceCurr = myfontWeekday.render(currWeather, True, fontColour)
-    screen.blit(textsurfaceTemp,(((screen_width - (textsurfaceTemp.get_width() + 10) ), 10)))
+    screen.blit(textsurfaceTemp,(((screen_width - (textsurfaceTemp.get_width() + 10) ), 0)))
     screen.blit(textsurfaceCurr,(((screen_width - (textsurfaceCurr.get_width() + 10) ), (textsurfaceTemp.get_height() - 14))))
 
     for i in range(len(forecast)):
@@ -174,7 +196,7 @@ def fadeInImg(img, x, y):
 def placeSpotifyImage(change):
     global isNewSong
     spotifyImg = pygame.image.load('spotify.jpeg').convert()
-    spotifyImg = pygame.transform.smoothscale(spotifyImg, (600, 600))
+    spotifyImg = pygame.transform.smoothscale(spotifyImg, (700, 700))
     placex = (screen_width / 2) - (spotifyImg.get_width() / 2)
     placey = (screen_height / 2) - (spotifyImg.get_width() / 2)
     if isNewSong and change:
@@ -224,7 +246,7 @@ def clock():
     textSurfaceWeekDay = myfontWeekday.render(date, True, fontColour)
     textSurfaceDate = myfontWeekday.render(current_date, True, fontColour)
     textSurfaceTime = myfontTime.render(current_time, True, fontColour)
-    screen.blit(textSurfaceTime, (10, 10))
+    screen.blit(textSurfaceTime, (10, 0))
     screen.blit(textSurfaceWeekDay, (12, (textSurfaceTime.get_height() - 14)))
     screen.blit(textSurfaceDate, (12, (textSurfaceTime.get_height() + textSurfaceDate.get_height() - 20)))
 
@@ -233,8 +255,8 @@ def spotifyText():
     global songArtist
     textsurfaceArtist = myfontArtist.render(songArtist, True, fontColour)
     textsurfaceSong = myfontSong.render(songName, True, fontColour)
-    screen.blit(textsurfaceArtist,(((screen_width / 2) - 300 ),((screen_height / 2 ) + 300)))
-    screen.blit(textsurfaceSong,(((screen_width / 2) - 300 ),((screen_height / 2 ) + 360)))
+    screen.blit(textsurfaceArtist,(((screen_width / 2) - 350 ),((screen_height / 2 ) + 350)))
+    screen.blit(textsurfaceSong,(((screen_width / 2) - 350 ),((screen_height / 2 ) + 410)))
 
 def changeBackground():
     global backgroundR
@@ -266,29 +288,29 @@ def changeBackground():
     if stepsB < 0: #Negative number
         stepsB = abs(stepsB)
         bUp = True
-    for i in range(0, 160):
+    for i in range(0, 120):
         pygame.event.get()
         if stepsR > 5:
             if rUp:
-                currentR = currentR + 2
-                stepsR = stepsR - 2
+                currentR = currentR + 4
+                stepsR = stepsR - 4
             elif not rUp:
-                currentR = currentR - 2
-                stepsR = stepsR - 2
+                currentR = currentR - 4
+                stepsR = stepsR - 4
         if stepsG > 5:
             if gUp:
-                currentG = currentG + 2
-                stepsG = stepsG - 2
+                currentG = currentG + 4
+                stepsG = stepsG - 4
             elif not gUp:
-                currentG = currentG - 2
-                stepsG = stepsG - 2
+                currentG = currentG - 4
+                stepsG = stepsG - 4
         if stepsB > 5:
             if bUp:
-                currentB = currentB + 2
-                stepsB = stepsB - 2
+                currentB = currentB + 4
+                stepsB = stepsB - 4
             elif not bUp:
-                currentB = currentB - 2
-                stepsB = stepsB - 2
+                currentB = currentB - 4
+                stepsB = stepsB - 4
         backgroundR = currentR
         backgroundG = currentG
         backgroundB = currentB
@@ -315,7 +337,10 @@ def draw():
 
 
 
-
+getAPIKEYS()
+# Set API URLs from grabbed keys
+FORECAST_URL = BASE_URL_FORECAST + "q=" + CITY + "&units=metric&appid=" + WEATHER_API_KEY
+URL = BASE_URL + "q=" + CITY + "&units=metric&appid=" + WEATHER_API_KEY
 threading.Thread(getWeather())
 threading.Thread(getForecast())
 while True:
