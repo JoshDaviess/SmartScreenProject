@@ -10,6 +10,7 @@ import requests
 import json
 import threading
 import googlemaps
+import datetime
 from datetime import datetime
 from colorthief import ColorThief
 from PIL import Image, ImageTk
@@ -361,6 +362,18 @@ def draw():
     pygame.event.get()
 
 
+def Travelling():
+    global isTravel
+    current_time = datetime.now().strftime("%H:%M:%S")
+    start = '07:00:00'
+    end = '09:00:00'
+    if weekday() not in ['Saturday', 'Sunday']:
+        if current_time > start and current_time < end:
+            isTravel = True
+            print('Work time')
+    if weekday() in ['Saturday', 'Sunday']:
+        isTravel = False
+
 
 getAPIKEYS()
 # Set API URLs from grabbed keys
@@ -370,7 +383,7 @@ threading.Thread(getWeather())
 threading.Thread(getForecast())
 threading.Thread(refreshJourney())
 while True:
-    isTravel = True
+    Travelling()
     if (sync % 5) == 0:
         spotifyDeets(True)
     if isNewSong and spotPlaying:
@@ -386,7 +399,9 @@ while True:
             changeBackground()
             changed = 1
     if (sync % 20) == 0:
-        refreshJourney()
+        if isTravel:
+            print('Refreshing Journey Time')
+            refreshJourney()
     if sync == 240:
         threading.Thread(getWeather())
         threading.Thread(getForecast())
