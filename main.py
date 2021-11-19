@@ -11,6 +11,7 @@ import json
 import threading
 import googlemaps
 import datetime
+import random
 from datetime import datetime
 from colorthief import ColorThief
 from PIL import Image, ImageTk
@@ -187,9 +188,12 @@ def getCurrentlyPlaying():
     if playing != None:
         spotPlaying = True
         print('found song')
-        songArtist = playing['item']['artists'][0]['name']
-        songName = playing['item']['name']
-        isNewSong = True
+        try:
+            songArtist = playing['item']['artists'][0]['name']
+            songName = playing['item']['name']
+            isNewSong = True
+        except:
+            print('Spotify error')
         if prevSong != songName:
             urllib.request.urlretrieve(playing['item']['album']['images'][0]['url'], 'spotify.jpeg')
             print('new song')
@@ -399,34 +403,17 @@ while True:
             changeBackground()
             changed = 1
     if (sync % 20) == 0:
+        if not spotPlaying:
+            dominant_color = (random.randint(0, 150), random.randint(0, 150), random.randint(0, 150))
+            changeBackground()
+    if (sync % 140) == 0:
         if isTravel:
             print('Refreshing Journey Time')
-            refreshJourney()
+            threading.Thread(refreshJourney())
     if sync == 240:
         threading.Thread(getWeather())
         threading.Thread(getForecast())
-    if (sync == 200) and not spotPlaying:
-        dominant_color = (200, 0, 0)
-        changeBackground()
-    if (sync == 230) and not spotPlaying:
-        dominant_color = (200, 200, 0)
-        changeBackground()
-    if (sync == 260) and not spotPlaying:
-        dominant_color = (0, 200, 0)
-        changeBackground()
-    if (sync == 290) and not spotPlaying:
-        dominant_color = (0, 200, 200)
-        changeBackground()
-    if (sync == 320) and not spotPlaying:
-        dominant_color = (0, 0, 200)
-        changeBackground()
-    if (sync == 350) and not spotPlaying:
-        dominant_color = (200, 0, 200)
-        changeBackground()
-    if (sync == 380) and not spotPlaying:
-        dominant_color = (0, 0, 0)
-        changeBackground()
-    if sync > 390:
+    if sync > 240:
         sync = 0
     draw()
     print(sync)
