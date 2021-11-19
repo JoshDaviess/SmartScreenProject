@@ -386,8 +386,10 @@ URL = BASE_URL + "q=" + CITY + "&units=metric&appid=" + WEATHER_API_KEY
 threading.Thread(getWeather())
 threading.Thread(getForecast())
 threading.Thread(refreshJourney())
+pygame.mouse.set_visible(False)
 while True:
     Travelling()
+    isTravel = True
     if (sync % 5) == 0:
         spotifyDeets(True)
     if isNewSong and spotPlaying:
