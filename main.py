@@ -181,7 +181,10 @@ def getCurrentlyPlaying():
     global isNewSong
     global spotPlaying
     prevSong = songName
-    playing = sp.current_user_playing_track()
+    try:
+        playing = sp.current_user_playing_track()
+    except:
+        print('API Failed')
     if playing == None:
         spotPlaying = False
         print('No song playing')
@@ -378,6 +381,17 @@ def Travelling():
     if weekday() in ['Saturday', 'Sunday']:
         isTravel = False
 
+def randColour():
+    global dominant_color
+    current_time = datetime.now().strftime("%H:%M:%S")
+    start = '07:00:00'
+    end = '11:30:00'
+    if current_time > start and current_time < end:
+        dominant_color = (0, 0, 0)
+        return
+    else:
+        dominant_color = (random.randint(0, 200), random.randint(0, 200), random.randint(0, 200))
+        return
 
 getAPIKEYS()
 # Set API URLs from grabbed keys
@@ -405,7 +419,7 @@ while True:
             changed = 1
     if (sync % 20) == 0:
         if not spotPlaying:
-            dominant_color = (random.randint(0, 150), random.randint(0, 150), random.randint(0, 150))
+            randColour()
             changeBackground()
     if (sync % 140) == 0:
         if isTravel:
