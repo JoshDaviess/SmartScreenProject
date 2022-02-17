@@ -281,8 +281,9 @@ def spotifyText():
     global songArtist
     textsurfaceArtist = myfontArtist.render(songArtist, True, fontColour)
     textsurfaceSong = myfontSong.render(songName, True, fontColour)
-    screen.blit(textsurfaceArtist,(((screen_width / 2) - 350 ),((screen_height / 2 ) + 350)))
-    screen.blit(textsurfaceSong,(((screen_width / 2) - 350 ),((screen_height / 2 ) + 410)))
+
+    screen.blit(textsurfaceArtist,(((screen_width / 2) - (textsurfaceArtist.get_width() / 2) ),((screen_height / 2 ) + 350)))
+    screen.blit(textsurfaceSong,(((screen_width / 2) - (textsurfaceSong.get_width() / 2) ),((screen_height / 2 ) + 410)))
 
 def changeBackground():
     global backgroundR
