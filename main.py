@@ -198,7 +198,10 @@ def getCurrentlyPlaying():
         except:
             print('Spotify error')
         if prevSong != songName:
-            urllib.request.urlretrieve(playing['item']['album']['images'][0]['url'], 'spotify.jpeg')
+            try:
+                urllib.request.urlretrieve(playing['item']['album']['images'][0]['url'], 'spotify.jpeg')
+            except:
+                print('Spotify error')
             print('new song')
             isNewSong = True
 
