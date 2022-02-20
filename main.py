@@ -315,29 +315,29 @@ def changeBackground():
     if stepsB < 0: #Negative number
         stepsB = abs(stepsB)
         bUp = True
-    for i in range(0, 120):
+    for i in range(0, 100):
         pygame.event.get()
         if stepsR > 5:
             if rUp:
-                currentR = currentR + 4
-                stepsR = stepsR - 4
+                currentR = currentR + 5
+                stepsR = stepsR - 5
             elif not rUp:
-                currentR = currentR - 4
-                stepsR = stepsR - 4
+                currentR = currentR - 5
+                stepsR = stepsR - 5
         if stepsG > 5:
             if gUp:
-                currentG = currentG + 4
-                stepsG = stepsG - 4
+                currentG = currentG + 5
+                stepsG = stepsG - 5
             elif not gUp:
-                currentG = currentG - 4
-                stepsG = stepsG - 4
+                currentG = currentG - 5
+                stepsG = stepsG - 5
         if stepsB > 5:
             if bUp:
-                currentB = currentB + 4
-                stepsB = stepsB - 4
+                currentB = currentB + 5
+                stepsB = stepsB - 5
             elif not bUp:
-                currentB = currentB - 4
-                stepsB = stepsB - 4
+                currentB = currentB - 5
+                stepsB = stepsB - 5
         backgroundR = currentR
         backgroundG = currentG
         backgroundB = currentB
@@ -407,12 +407,12 @@ threading.Thread(refreshJourney())
 pygame.mouse.set_visible(False)
 while True:
     Travelling()
-    if (sync % 5) == 0:
+    if (sync % 4) == 0:
         spotifyDeets(True)
     if isNewSong and spotPlaying:
         print('changing background')
         color_thief = ColorThief('spotify.jpeg')
-        dominant_color = color_thief.get_color(quality=1)
+        dominant_color = color_thief.get_color(quality=20)
         changeBackground()
         changed = 0
         isNewSong = False
