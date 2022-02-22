@@ -407,7 +407,7 @@ threading.Thread(refreshJourney())
 pygame.mouse.set_visible(False)
 while True:
     Travelling()
-    if (sync % 4) == 0:
+    if (sync % 3) == 0:
         spotifyDeets(True)
     if isNewSong and spotPlaying:
         print('changing background')
