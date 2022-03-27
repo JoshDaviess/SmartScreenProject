@@ -13,6 +13,7 @@ import googlemaps
 import datetime
 import random
 from datetime import datetime
+from datetime import timedelta
 from colorthief import ColorThief
 from PIL import Image, ImageTk
 from spotipy.oauth2 import SpotifyOAuth
@@ -110,7 +111,7 @@ def refreshJourney():
     global GOOGLE_API_KEY
     global journeyLength
     gmaps = googlemaps.Client(key=GOOGLE_API_KEY)
-    now = datetime.now()
+    now = datetime.now() + timedelta(minutes=1)
     directions_result = gmaps.directions(home_coord, work_coord, mode="driving", departure_time=now, avoid='tolls')
     legs = directions_result[0].get("legs")
     for leg in legs:
