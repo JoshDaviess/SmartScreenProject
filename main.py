@@ -112,10 +112,13 @@ def refreshJourney():
     global journeyLength
     gmaps = googlemaps.Client(key=GOOGLE_API_KEY)
     now = datetime.now() + timedelta(minutes=1)
-    directions_result = gmaps.directions(home_coord, work_coord, mode="driving", departure_time=now, avoid='tolls')
-    legs = directions_result[0].get("legs")
-    for leg in legs:
-        journeyLength = leg.get('duration_in_traffic').get('text')
+    try:
+        directions_result = gmaps.directions(home_coord, work_coord, mode="driving", departure_time=now, avoid='tolls')
+        legs = directions_result[0].get("legs")
+        for leg in legs:
+            journeyLength = leg.get('duration_in_traffic').get('text')
+    except:
+        print('Journey Refresh Failed')
 
 
 
