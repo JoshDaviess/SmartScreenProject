@@ -431,8 +431,11 @@ while True:
             changeBackground()
     if (sync % 140) == 0:
         if isTravel:
-            print('Refreshing Journey Time')
-            threading.Thread(refreshJourney())
+            try:
+                print('Refreshing Journey Time')
+                threading.Thread(refreshJourney())
+            except:
+                print('Exception')
     if sync == 240:
         threading.Thread(getWeather())
         threading.Thread(getForecast())
